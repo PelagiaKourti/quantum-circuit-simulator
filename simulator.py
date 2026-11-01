@@ -1,4 +1,5 @@
 import numpy as np 
+import collections as col
 
 
 class QuantumCircuit():
@@ -62,19 +63,27 @@ class QuantumCircuit():
         return np.abs(self.state) ** 2   
 
 
+    def measure(self, shots):
+        p = self.probabilities()
+        results = np.random.choice(2 ** self.n, size=shots, p=p)
+        bits = [format(r, f'0{self.n}b') for r in results]        
+        return dict(col.Counter(bits))
+        
 
 if __name__ == "__main__":
     # Bell: [0.5, 0, 0, 0.5]
     qc = QuantumCircuit(2)
     qc.h(0); qc.cnot(0, 1)
     print(qc.probabilities())  
+    print(qc.measure(1000))   
 
     # GHZ: [0.5, 0, 0, 0, 0, 0, 0, 0.5]
     qc = QuantumCircuit(3)
     qc.h(0); qc.cnot(0, 1); qc.cnot(1, 2)
     print(qc.probabilities())   
 
-    #|101⟩ with probability 1
+    #|101> with probability 1
     qc = QuantumCircuit(3)
     qc.x(0); qc.cnot(0, 2)
     print(qc.probabilities())   
+    
