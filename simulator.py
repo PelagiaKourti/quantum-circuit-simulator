@@ -8,23 +8,41 @@ class QuantumCircuit():
         self.state = np.zeros(2 ** n, dtype=complex)   
         self.state[0] = 1                            
 
+    #Identity gate
     def _apply_single(self, gate, k):   
         I = np.eye(2)
         mats = [gate if q == k else I for q in range(self.n)]
         self.state = self._kron_list(mats) @ self.state
 
+    #Hadamard gate
     def h(self, k):
         H = np.array([[1,1],[1,-1]]) / np.sqrt(2)
         self._apply_single(H,k)
 
+    #X gate
     def x(self,k):
         X = np.array([[0,1], [1,0]])
         self._apply_single(X,k)
 
+    #Y gate   
+    def y(self,k):
+        Y = np.array([[0,-1j], [1j, 0]])
+        self._apply_single(Y,k)
+
+    #Z gate
     def z(self,k):
         Z = np.array([[1,0],[0,-1]])
         self._apply_single(Z,k)
 
+    #S gate, S**2 = Z
+    def s(self,k):
+        S = np.diag([1, 1j])
+        self._apply_single(S,k)
+
+    #T gate, T**2 = S
+    def t(self,k):
+        T = np.diag([1, np.exp(1j * np.pi /4)])
+        self._apply_single(T,k)    
 
     def _kron_list(self, mats):
         M = np.array([[1]])
@@ -32,7 +50,7 @@ class QuantumCircuit():
             M = np.kron(M, A)
         return M
 
-
+    #CNOT gate
     def cnot(self, control, target):
         I = np.eye(2)
         X = np.array([[0, 1], [1, 0]])
@@ -59,18 +77,20 @@ class QuantumCircuit():
         self.state = M @ self.state
 
 
+    #probabilities
     def probabilities(self):
         return np.abs(self.state) ** 2   
 
-
+    #measurement
     def measure(self, shots):
         p = self.probabilities()
         results = np.random.choice(2 ** self.n, size=shots, p=p)
         bits = [format(r, f'0{self.n}b') for r in results]        
         return dict(col.Counter(bits))
-        
+
 
 if __name__ == "__main__":
+    #examples
     # Bell: [0.5, 0, 0, 0.5]
     qc = QuantumCircuit(2)
     qc.h(0); qc.cnot(0, 1)
@@ -87,3 +107,12 @@ if __name__ == "__main__":
     qc.x(0); qc.cnot(0, 2)
     print(qc.probabilities())   
     
+    #test that two T gates give a S gate
+    a = QuantumCircuit(1); a.h(0); a.t(0); a.t(0)
+    b = QuantumCircuit(1); b.h(0); b.s(0)
+    print(np.allclose(a.state,b.state))  #in contradiction to ==, that fails if it is not exactly the same
+
+    #test that two S gates give a Z gate
+    c = QuantumCircuit(1); c.h(0); c.s(0); c.s(0)
+    d = QuantumCircuit(1); d.h(0); d.z(0)
+    print(np.allclose(c.state,d.state)) 
