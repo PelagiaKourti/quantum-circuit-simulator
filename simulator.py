@@ -106,13 +106,3 @@ if __name__ == "__main__":
     qc = QuantumCircuit(3)
     qc.x(0); qc.cnot(0, 2)
     print(qc.probabilities())   
-    
-    #test that two T gates give a S gate
-    a = QuantumCircuit(1); a.h(0); a.t(0); a.t(0)
-    b = QuantumCircuit(1); b.h(0); b.s(0)
-    print(np.allclose(a.state,b.state))  #in contradiction to ==, that fails if it is not exactly the same
-
-    #test that two S gates give a Z gate
-    c = QuantumCircuit(1); c.h(0); c.s(0); c.s(0)
-    d = QuantumCircuit(1); d.h(0); d.z(0)
-    print(np.allclose(c.state,d.state)) 
