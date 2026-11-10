@@ -46,3 +46,21 @@ def test_measure_bell():
     qc.cnot(0, 1)
     counts = qc.measure(1000)
     assert set(counts.keys()) == {'00', '11'}
+
+def test_rx_pi():
+    qc = QuantumCircuit(1); qc.rp("x", 0, np.pi)
+    assert np.allclose(qc.probabilities(), [0,1])
+
+def test_ry_half_pi():
+    qc = QuantumCircuit(1); qc.rp("y", 0, np.pi/2)
+    assert np.allclose(qc.state, [1/ np.sqrt(2), 1 / np.sqrt(2)])
+
+def test_ry_probability():
+    for theta in [0, 0.3, 1, np.pi/2, 2, np.pi]:
+        qc = QuantumCircuit(1); qc.rp("y", 0 , theta)
+        assert np.isclose(qc.probabilities()[1], np.sin(theta /2)**2 )
+
+def test_rz_keeps_probabilities():
+    for theta in [0, 0.3, 1, np.pi/2, 2, np.pi]:
+        qc = QuantumCircuit(1); qc.rp("z", 0, theta)
+        assert np.allclose(qc.probabilities(), [1,0])

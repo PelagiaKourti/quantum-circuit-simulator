@@ -1,59 +1,65 @@
 import numpy as np 
 import collections as col
 
+X = np.array([[0,1], [1,0]])
+Y = np.array([[0,-1j], [1j, 0]])
+Z = np.array([[1,0],[0,-1]])
+I2 = np.eye(2)
 
 class QuantumCircuit():
     def __init__(self,n):
         self.n = n
         self.state = np.zeros(2 ** n, dtype=complex)   
         self.state[0] = 1                            
-
+    
     #Identity gate
     def _apply_single(self, gate, k):   
         I = np.eye(2)
         mats = [gate if q == k else I for q in range(self.n)]
         self.state = self._kron_list(mats) @ self.state
-
+    
     #Hadamard gate
     def h(self, k):
         H = np.array([[1,1],[1,-1]]) / np.sqrt(2)
         self._apply_single(H,k)
-
+    
     #X gate
     def x(self,k):
-        X = np.array([[0,1], [1,0]])
         self._apply_single(X,k)
-
+    
     #Y gate   
     def y(self,k):
-        Y = np.array([[0,-1j], [1j, 0]])
         self._apply_single(Y,k)
-
+    
     #Z gate
     def z(self,k):
-        Z = np.array([[1,0],[0,-1]])
         self._apply_single(Z,k)
-
+    
     #S gate, S**2 = Z
     def s(self,k):
         S = np.diag([1, 1j])
         self._apply_single(S,k)
-
+    
     #T gate, T**2 = S
     def t(self,k):
         T = np.diag([1, np.exp(1j * np.pi /4)])
         self._apply_single(T,k)    
-
+    
+    #R_X, R_Y, R_Z:
+    def rp(self, P, k, theta):
+        pauli = {"x" : X, "y" : Y, "z" : Z}
+        RP = np.cos(theta/2) * I2 - 1j * np.sin(theta/2) * pauli[P]
+        self._apply_single(RP, k)
+    
+    #tensor product of matrices
     def _kron_list(self, mats):
         M = np.array([[1]])
         for A in mats:
             M = np.kron(M, A)
         return M
-
+    
     #CNOT gate
     def cnot(self, control, target):
-        I = np.eye(2)
-        X = np.array([[0, 1], [1, 0]])
         P0 = np.array([[1,0],[0,0]])
         P1 = np.array([[0,0],[0,1]])
         
@@ -64,7 +70,7 @@ class QuantumCircuit():
         
         
         #for n qubits with control=k1, target=k2:
-        term0 = [P0 if q == control else I for q in range(self.n)]
+        term0 = [P0 if q == control else I2 for q in range(self.n)]
         term1 = []
         for q in range(self.n):
             if q == control:
@@ -72,7 +78,7 @@ class QuantumCircuit():
             elif q == target:
                 term1.append(X)
             else:
-                term1.append(I)
+                term1.append(I2)
         M = self._kron_list(term0) + self._kron_list(term1)
         self.state = M @ self.state
 
@@ -106,3 +112,7 @@ if __name__ == "__main__":
     qc = QuantumCircuit(3)
     qc.x(0); qc.cnot(0, 2)
     print(qc.probabilities())   
+    
+    qc = QuantumCircuit(1)
+    qc.rp("y", 0, np.pi / 2)  #that is, |+>
+    print(qc.state) 
